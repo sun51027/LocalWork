@@ -240,6 +240,14 @@ private:
   bool passHLT_Photon200_ ; //2017, 2018
   bool passHLT_DoublePhoton60_ ; //2016
   bool passHLT_DoublePhoton70_ ; //2017, 2018
+  //----------------2016 MET trigger path-------------------
+  bool passHLT_PFMET170_NotCleaned_;
+  bool passHLT_PFMET170_NoiseCleaned_;
+  bool passHLT_PFMET170_JetIdCleaned_;
+  bool passHLT_PFMET170_BeamHaloCleaned_;
+  bool passHLT_PFMET170_HBHECleaned_;
+  bool passHLT_PFMET170_HBHE_BeamHaloCleaned_;
+
   //----------------add new trigger path 3/20-----------
   bool passHLT_PFMET200_NotCleaned_;//2017,2018
   bool passHLT_PFMET200_HBHECleaned_;//2017 2018
@@ -619,6 +627,15 @@ void MonoNtupleDumper::analyze(const edm::Event& iEvent, const edm::EventSetup& 
   passHLT_DoublePhoton60_ = 0;
   passHLT_DoublePhoton70_ = 0;
   //---------------------------------------
+  
+  passHLT_PFMET170_NotCleaned_ = 0;
+  passHLT_PFMET170_NoiseCleaned_ = 0;
+  passHLT_PFMET170_JetIdCleaned_ = 0;
+  passHLT_PFMET170_BeamHaloCleaned_ = 0;
+  passHLT_PFMET170_HBHECleaned_ = 0;
+  passHLT_PFMET170_HBHE_BeamHaloCleaned_ = 0;
+
+  //---------------------------------------
   passHLT_PFMET200_NotCleaned_ = 0;
   passHLT_PFMET200_HBHECleaned_ = 0;
   passHLT_PFMET200_HBHE_BeamHaloCleaned_ = 0;
@@ -639,17 +656,26 @@ void MonoNtupleDumper::analyze(const edm::Event& iEvent, const edm::EventSetup& 
     passHLT_Photon200_ |= name.find("HLT_Photon200_v") != std::string::npos;
     passHLT_DoublePhoton60_ |= name.find("HLT_DoublePhoton60_v") != std::string::npos;
     passHLT_DoublePhoton70_ |= name.find("HLT_DoublePhoton70_v") != std::string::npos;
-    //--------------------------------------------
+    //-------------------------------------------2016-------
+
+    passHLT_PFMET170_NotCleaned_ |= name.find("HLT_PFMET170_NotCleaned_v") != std::string::npos;
+    passHLT_PFMET170_NoiseCleaned_ |= name.find("HLT_PFMET170_NoiseCleaned_v") != std::string::npos;
+    passHLT_PFMET170_JetIdCleaned_ |= name.find("HLT_PFMET170_JetIdCleaned_v") != std::string::npos;
+    passHLT_PFMET170_BeamHaloCleaned_ |= name.find("HLT_PFMET170_BeamHaloCleaned_v") != std::string::npos;
+    passHLT_PFMET170_HBHECleaned_ |= name.find("HLT_PFMET170_HBHECleaned_v") != std::string::npos;
+    passHLT_PFMET170_HBHE_BeamHaloCleaned_ |= name.find("HLT_PFMET170_HBHE_BeamHaloCleaned_v") != std::string::npos;
+
+    //--------------------------------------------2017 2018------
     passHLT_PFMET200_NotCleaned_ |= name.find("HLT_PFMET200_NotCleaned_v") != std::string::npos;
-    passHLT_PFMET200_HBHECleaned_ |= name.find("passHLT_PFMET200_HBHECleaned_v") != std::string::npos;
-    passHLT_PFMET200_HBHE_BeamHaloCleaned_ |= name.find("passHLT_PFMET200_HBHE_BeamHaloCleaned_v") != std::string::npos;
-    passHLT_PFMET250_HBHECleaned_ |= name.find("passHLT_PFMET250_HBHECleaned_v") != std::string::npos;
-    passHLT_PFMET300_HBHECleaned_ |= name.find("passHLT_PFMET300_HBHECleaned_v") != std::string::npos;
-    passHLT_PFMETTypeOne200_HBHE_BeamHaloCleaned_ |= name.find("passHLT_PFMETTypeOne200_HBHE_BeamHaloCleaned_v") != std::string::npos;
-    passHLT_CaloMET250_NotCleaned_ |= name.find("passHLT_CaloMET250_NotCleaned_v") != std::string::npos;
-    passHLT_CaloMET250_HBHECleaned_ |= name.find("passHLT_CaloMET250_HBHECleaned_v") != std::string::npos;
-    passHLT_CaloMET300_HBHECleaned_ |= name.find("passHLT_CaloMET300_HBHECleaned_v") != std::string::npos;
-    passHLT_CaloMET350_HBHECleaned_ |= name.find("passHLT_CaloMET350_HBHECleaned_v") != std::string::npos;
+    passHLT_PFMET200_HBHECleaned_ |= name.find("HLT_PFMET200_HBHECleaned_v") != std::string::npos;
+    passHLT_PFMET200_HBHE_BeamHaloCleaned_ |= name.find("HLT_PFMET200_HBHE_BeamHaloCleaned_v") != std::string::npos;
+    passHLT_PFMET250_HBHECleaned_ |= name.find("HLT_PFMET250_HBHECleaned_v") != std::string::npos;
+    passHLT_PFMET300_HBHECleaned_ |= name.find("HLT_PFMET300_HBHECleaned_v") != std::string::npos;
+    passHLT_PFMETTypeOne200_HBHE_BeamHaloCleaned_ |= name.find("HLT_PFMETTypeOne200_HBHE_BeamHaloCleaned_v") != std::string::npos;
+    passHLT_CaloMET250_NotCleaned_ |= name.find("HLT_CaloMET250_NotCleaned_v") != std::string::npos;
+    passHLT_CaloMET250_HBHECleaned_ |= name.find("HLT_CaloMET250_HBHECleaned_v") != std::string::npos;
+    passHLT_CaloMET300_HBHECleaned_ |= name.find("HLT_CaloMET300_HBHECleaned_v") != std::string::npos;
+    passHLT_CaloMET350_HBHECleaned_ |= name.find("HLT_CaloMET350_HBHECleaned_v") != std::string::npos;
     
     //passHLT_Photon165_HE10_ |= name.find("HLT_Photon165_HE10_v") != std::string::npos;
   }
@@ -1298,9 +1324,18 @@ MonoNtupleDumper::beginJob()
   m_tree->Branch("passHLT_Photon200" , &passHLT_Photon200_ , "passHLT_Photon200/O");
   m_tree->Branch("passHLT_DoublePhoton60" , &passHLT_DoublePhoton60_ , "passHLT_DoublePhoton60/O");
   m_tree->Branch("passHLT_DoublePhoton70" , &passHLT_DoublePhoton70_ , "passHLT_DoublePhoton70/O");
-  m_tree->Branch("passHLT_PFMET200_NotCleaned" , &passHLT_PFMET200_NotCleaned_ , "passHLT_PFMET200_NotCleaned/O");
-  //-------------------------------------
+  //--------------------------------
 
+  m_tree->Branch("passHLT_PFMET170_NotCleaned" , &passHLT_PFMET170_NotCleaned_ , "passHLT_PFMET170_NotCleaned/O");
+  m_tree->Branch("passHLT_PFMET170_NoiseCleaned" , &passHLT_PFMET170_NoiseCleaned_ , "passHLT_PFMET170_NoiseCleaned/O");
+  m_tree->Branch("passHLT_PFMET170_JetIdCleaned" , &passHLT_PFMET170_JetIdCleaned_ , "passHLT_PFMET170_JetIdCleaned/O");
+  m_tree->Branch("passHLT_PFMET170_BeamHaloCleaned" , &passHLT_PFMET170_BeamHaloCleaned_ , "passHLT_PFMET170_BeamHaloCleaned/O");
+  m_tree->Branch("passHLT_PFMET170_HBHECleaned" , &passHLT_PFMET170_HBHECleaned_ , "passHLT_PFMET170_HBHECleaned/O");
+  m_tree->Branch("passHLT_PFMET170_HBHE_BeamHaloCleaned" , &passHLT_PFMET170_HBHE_BeamHaloCleaned_ , "passHLT_PFMET170_HBHE_BeamHaloCleaned/O");
+
+  //-------------------------------
+
+  m_tree->Branch("passHLT_PFMET200_NotCleaned" , &passHLT_PFMET200_NotCleaned_ , "passHLT_PFMET200_NotCleaned/O");
   m_tree->Branch("passHLT_PFMET200_HBHECleaned" , &passHLT_PFMET200_HBHECleaned_ , "passHLT_PFMET200_HBHECleaned/O");
   m_tree->Branch("passHLT_PFMET200_HBHE_BeamHaloCleaned" , &passHLT_PFMET200_HBHE_BeamHaloCleaned_ , "passHLT_PFMET200_HBHE_BeamHaloCleaned/O");
   m_tree->Branch("passHLT_PFMET250_HBHECleaned" , &passHLT_PFMET250_HBHECleaned_ , "passHLT_PFMET250_HBHECleaned/O");
