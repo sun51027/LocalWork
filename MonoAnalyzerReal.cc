@@ -62,7 +62,8 @@ public:
     double rzp0, double rzp1, double rzp2,
     double dist, double f51, double f15,
     double e55, double hiso, double eta,
-    double phi, double mono_eta, double mono_phi, double amon_eta, double amon_phi, double event,double NPV):
+    double phi, double mono_eta, double mono_phi, double amon_eta, double amon_phi, 
+    double event,double NPV):
   subHits_(sh),subSatHits_(satsh),dEdXSig_(dedxsig),tIso_(tiso),xyp0_(xyp0),
   xyp1_(xyp1),xyp2_(xyp2),rzp0_(rzp0),rzp1_(rzp1),rzp2_(rzp2),
   dist_(dist),f51_(f51),f15_(f15),e55_(e55),hIso_(hiso),
@@ -75,25 +76,8 @@ public:
     rzp0_(mc.rzp0_),rzp1_(mc.rzp1_),rzp2_(mc.rzp2_),
     dist_(mc.dist_),f51_(mc.f51_),f15_(mc.f15_),e55_(mc.e55_),
     hIso_(mc.hIso_),eta_(mc.eta_),phi_(mc.phi_),mono_eta_(mc.mono_eta_), mono_phi_(mc.mono_phi_),
-  amon_eta_(mc.amon_eta_), amon_phi_(mc.amon_phi_),event_(mc.event_),NPV_(mc.NPV_) { } //{ empty >////<} 
+  amon_eta_(mc.amon_eta_), amon_phi_(mc.amon_phi_),event_(mc.event_),NPV_(mc.NPV_) { } 
         
-/*  MonoCandidate(double sh, double satsh, double dedxsig,double tiso, double xyp0, double xyp1, double xyp2,
-    double rzp0, double rzp1, double rzp2,
-    double dist, double f51, double f15,
-    double e55, double hiso, double eta,
-    double phi):
-  subHits_(sh),subSatHits_(satsh),dEdXSig_(dedxsig),tIso_(tiso),xyp0_(xyp0),
-  xyp1_(xyp1),xyp2_(xyp2),rzp0_(rzp0),rzp1_(rzp1),rzp2_(rzp2),
-  dist_(dist),f51_(f51),f15_(f15),e55_(e55),hIso_(hiso),
-  eta_(eta),phi_(phi) { }
-  //This will be used in comparing with cut
-  MonoCandidate(const MonoCandidate &mc) : 
-    subHits_(mc.subHits_),subSatHits_(mc.subSatHits_),dEdXSig_(mc.dEdXSig_),tIso_(mc.tIso_),
-    xyp0_(mc.xyp0_),xyp1_(mc.xyp1_),xyp2_(mc.xyp2_),
-    rzp0_(mc.rzp0_),rzp1_(mc.rzp1_),rzp2_(mc.rzp2_),
-    dist_(mc.dist_),f51_(mc.f51_),f15_(mc.f15_),e55_(mc.e55_),
-    hIso_(mc.hIso_),eta_(mc.eta_),phi_(mc.phi_) { } //{ empty >////<} 
- */
   ~MonoCandidate() {}
   void print(){
   } 
@@ -132,7 +116,20 @@ public:
   double amon_phi_;
 
 };	
-class MonoCuts:public MonoCandidate
+class Photon
+{
+public:
+  Photon(){}
+  Photon(double pho_eta, double pho_phi, double pho_pt):pho_eta_(pho_eta),pho_phi_(pho_phi),pho_pt_(pho_pt){}
+  Photon(const Photon &mc):pho_eta_(mc.pho_eta_),pho_phi_(mc.pho_phi_),pho_pt_(mc.pho_pt_){}
+  double pho_eta_;
+  double pho_phi_;
+  double pho_pt_;
+
+  ~Photon(){}
+
+};
+class MonoCuts:public MonoCandidate, public Photon
 {
 public:
   MonoCuts(){}
@@ -207,9 +204,14 @@ public:
   }
 
   ~MonoCuts(){}
-  void doAnalysis(vector<MonoCandidate> &cand, unsigned nCandidates, bool TRG, unsigned ev)
+  void PrintFakeEvent(unsigned ev)
   {
-//	cout<<"enter doAnalysis"<<endl;
+	cout<<"Fake ev "<<ev<<endl;
+  }
+  void doAnalysis(vector<MonoCandidate> &cand, vector<Photon> & pho, unsigned nCandidates,unsigned nPhoton, bool TRG, unsigned ev)
+  {
+//	cout<<"enter doAnalysis successfully"<<endl;
+//	cout<<"nPhoton "<<nPhoton<<endl;
 	CutFlowCand_TRG.clear();	
 	CutFlowCand_Qual.clear();
 	CutFlowCand_Energy.clear();
@@ -220,9 +222,8 @@ public:
 	N1CutCand_Energy.clear();
 	N1CutCand_F51.clear();
 	N1CutCand_Dedx.clear();
-
-	//for every candidate loop
-//	cout<<"============================================"<<endl;
+	HighPtPhoton.clear();
+	
 //	cout<<"ev "<<ev<<", cand number "<<nCandidates<<endl;
      for(unsigned c=0;c<nCandidates;c++){
 	MonoCandidate &cands = cand[c];
@@ -253,11 +254,23 @@ public:
 	if(TRG && QualCut && ECut && F51Cut) CutFlowCand_F51.push_back(cands);
 	if(TRG && QualCut && ECut && F51Cut && dEdXCut) CutFlowCand_Dedx.push_back(cands);
 	
-    }//for cand loop
+      }//for cand loop
 
+//	cout<<"entering HighPtPhoton loop"<<endl;	
+    	
+    if(nPhoton!=0){
+    for(unsigned p=0;p<nPhoton;p++){
+	Photon &photon = pho[p];
+	bool PhotonPtCut = evalPhoton(photon);
+	//HighPtPhoton.push_back(photon);
+	if(PhotonPtCut) HighPtPhoton.push_back(photon);
+    }
+    }
+
+//	cout<<"end of highphoton loop"<<endl;
 	//cut flow events calculating
         sort(CutFlowCand_TRG.begin(),CutFlowCand_TRG.begin()+CutFlowCand_TRG.size());
-
+	
 	if(CutFlowCand_TRG.size()>0) 
 	{
 		if(CutFlowCand_TRG[0].dEdXSig_<999){	
@@ -368,7 +381,8 @@ public:
 		bool RealMono=0;
 		bool RealAnti=0;
 
-		for(int i=0; i<CutFlowCand_Dedx.size();i++){
+	   //go through all candidate in this event
+	   for(int i=0; i<CutFlowCand_Dedx.size();i++){
 
 		double m_deltaR=0;
 		double am_deltaR=0;
@@ -377,16 +391,18 @@ public:
 		am_deltaR= sqrt(pow(CutFlowCand_Dedx[i].eta_-CutFlowCand_Dedx[0].amon_eta_,2)+
                                 pow(CutFlowCand_Dedx[i].phi_-CutFlowCand_Dedx[0].amon_phi_,2));
 
-		if(m_deltaR<0.9) 
+		if(m_deltaR<0.15) 
 		{
 			cout<<i+1<<" monopole match "<<endl;
 			RealNum++;
+			Reco++;
 			RealMono=true;
 		}
-		else if(am_deltaR<0.9) 
+		else if(am_deltaR<0.15) 
 		{
 			cout<<i+1<<" anti monopole match"<<endl;
 			RealAntiNum++;
+			Reco++;
 			RealAnti=true;
 		}
 		else 
@@ -394,6 +410,7 @@ public:
 			cout<<ev<<" ";
 			cout<<i+1<<" FAKE"<<endl;
 			FakeNum++;
+			cout<<"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"<<endl;
 		}
 
 		cout<<"          candidate           monoGen         antimonoGen"<<endl;
@@ -414,18 +431,42 @@ public:
 			cout<<i<<endl;
 			cout<<"     eta "<<setprecision(5)<<CutFlowCand_TRG[i].eta_<<endl;
 			cout<<"     phi "<<setprecision(5)<<CutFlowCand_TRG[i].phi_<<endl;
+			cout<<"      Et "<<setprecision(5)<<CutFlowCand_TRG[i].e55_<<endl;
 			cout<<" dEdxSig "<<setprecision(5)<<CutFlowCand_TRG[i].dEdXSig_<<endl;
 			cout<<"     f51 "<<setprecision(5)<<CutFlowCand_TRG[i].f51_<<endl;
-			cout<<"      Et "<<setprecision(5)<<CutFlowCand_TRG[i].e55_<<endl;
+
 		}
-			cout<<"=================================="<<endl;
+		
+		cout<<endl;	
+		cout<<"Print out photon information"<<endl;
+	//	cout<<"nPhoton "<<nPhoton<<endl;
+	//	cout<<"Highphoton size "<<HighPtPhoton.size()<<endl;
+		for(int j=0;j<HighPtPhoton.size();j++){
+			cout<<"pho  eta "<<HighPtPhoton[j].pho_eta_<<endl;
+                	cout<<"pho  phi "<<HighPtPhoton[j].pho_phi_<<endl;
+                	cout<<"pho   pt "<<HighPtPhoton[j].pho_pt_<<endl;
+		}
+
+		//to see monopole is photon-like or spike-like
+		//define: photon-monopole angle<0.5 is photon-like
+		for(int j=0;j<HighPtPhoton.size();j++){
+			double photonMono_deltaR = 0;
+			photonMono_deltaR = sqrt(pow(CutFlowCand_Dedx[i].eta_-HighPtPhoton[j].pho_eta_,2)+
+                	               	         pow(CutFlowCand_Dedx[i].phi_-HighPtPhoton[j].pho_phi_,2));
+			if(photonMono_deltaR<0.15){
+				cout<<"deltaR "<<photonMono_deltaR<<endl;
+				cout<<"photon-like monopole"<<endl;
+				photonLike++;// otherwise not photon-like monopole
+			}
+		}
+		cout<<endl;
+		cout<<"=================================="<<endl;
 		}
 	}
 	//Cut all
 	if(CutFlowCand_Dedx.size()>0)
+//	if(RealMono==true && RealAnti ==true)
 	{
-	
-		//cout<<"ev "<<ev<<"How many candidate per event we have? "<<CutFlowCand_Dedx.size()<<endl;
 		        
 		PlotSet &x = CutFlow[3];
 	        x.GetPlot(FracSatVNstrips)->Fill(CutFlowCand_Dedx[0].subHits_,CutFlowCand_Dedx[0].subSatHits_/CutFlowCand_Dedx[0].subHits_);
@@ -441,8 +482,6 @@ public:
 
 
 
-		//cout<<"THERE IS OVER 1 CADNDIDATE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
-		//count_test++;
 	///////////////////////////////////////////////////
 	/////////  N1 Cut Plots and  Count   //////////////
 	///////////////////////////////////////////////////
@@ -525,15 +564,6 @@ public:
 	}
 	//cout<<"do analysis end"<<endl;	
   }
-/*  void PrintInformation(unsigned ev)
-  { 
-	if(count<count_test){
-	cout<<"////////////////////////////////////////////"<<endl;
-	cout<<"ev  =  "<<ev<<endl;
-	cout<<"////////////////////////////////////////////"<<endl;
-	}
-  }
-  */
   bool operator<(const MonoCandidate &mc)const{
    if(dEdXSig_>mc.dEdXSig_) return true;
    else if(dEdXSig_==mc.dEdXSig_){
@@ -585,12 +615,15 @@ public:
         cout<<" dEdXSigCut "<<(double)dEdX_count/(double)NodEdXCut<<endl;
 	cout<<"///////////////////////////////////////"<<endl;
 //	cout<<count_test<<endl;
- 	cout<<" 1 monopole "<<MonoNum1<<endl;
- 	cout<<" 2 monopole "<<MonoNum2<<endl;
- 	cout<<" 3 monopole "<<MonoNum3<<endl;
+ 	cout<<" 1 monopole event "<<MonoNum1<<endl;
+ 	cout<<" 2 monopole event "<<MonoNum2<<endl;
+ 	cout<<" 3 monopole event "<<MonoNum3<<endl;
+	cout<<" ideal total mono "<<MonoNum1+2*MonoNum2<<endl;
         cout<<"Real monopole "<<RealNum<<endl;
         cout<<"Real antimono "<<RealAntiNum<<endl;
-        cout<<"Real Event    "<<RealEvNum<<endl;
+	cout<<"Fake monopole "<<FakeNum<<endl;
+        cout<<"Total reconstructed event "<<Reco<<endl;
+	cout<<"photonLike "<<photonLike<<endl;
 	  
       cout<<endl;
   }
@@ -606,6 +639,7 @@ public:
   static const double dEdXSigCut_ ;
   static const double e55Cut_ ;
   static const double f51Cut_ ;
+  static const double photonCut_ ;
    // if you want to set parameter in the class, you should add constexpr
   //  ex. constexpr static const double x=1;
 
@@ -628,7 +662,8 @@ private:
   bool evalE(MonoCandidate &mc) { return mc.e55_ > e55Cut_; }
   bool evalF51(MonoCandidate &mc) { return mc.f51_ > f51Cut_ ; }
   bool evaldEdX(MonoCandidate &mc) { return mc.dEdXSig_ > dEdXSigCut_ ;}
-  int TotalEvents = 1000;
+  bool evalPhoton(Photon &mc){ return mc.pho_pt_ > photonCut_; }
+  int TotalEvents = 15000;
  
   vector<MonoCandidate> CutFlowCand_TRG;
   vector<MonoCandidate> CutFlowCand_Qual;
@@ -641,6 +676,8 @@ private:
   vector<MonoCandidate> N1CutCand_Energy;
   vector<MonoCandidate> N1CutCand_F51;
   vector<MonoCandidate> N1CutCand_Dedx;
+	
+  vector<Photon> HighPtPhoton;
   //no. of every selections 
   int Qual=0;
   int E=0;
@@ -660,7 +697,10 @@ private:
   int RealNum=0;
   int RealAntiNum=0;
   int RealEvNum=0;
-
+  
+  int Reco=0;
+  int Gen=0;
+  int photonLike=0;
 
   int count_test=0;
   int TRGminitest=0;
@@ -698,27 +738,35 @@ private:
   const double MonoCuts::rzp2Cut_=0.005;
   const double MonoCuts::distCut_ = 0.5;
   const double MonoCuts::hIsoCut_= 10;
+//  const double MonoCuts::dEdXSigCut_ = 7;//loose
   const double MonoCuts::dEdXSigCut_ = 9;
+//  const double MonoCuts::e55Cut_ = 0;
   const double MonoCuts::e55Cut_ = 200;
+//  const double MonoCuts::f51Cut_ = 0.6;
   const double MonoCuts::f51Cut_ = 0.85;
+  const double MonoCuts::photonCut_ = 200;
 
 void MonoAnalyzerReal()
 {
 	cout<<"hello"<<endl;
-	TFile *oFile = new TFile("Monopole_RECO_1000ev.root","recreate");
+	TFile *oFile = new TFile("Monopole_test_HLTOR.root","recreate");
 //        TFile *oFile = new TFile("Monopole_Analyzer.root","recreate");
 	cout<<"new file line pass"<<endl;
 
-	TFile *fin = new TFile("MonopoleNtuple1000_2017_20evt.root");
+//	TFile *fin = new TFile("MonoNtuple_MC_2017_1000.root");
+	TFile *fin = new TFile("MonopoleNtuple1000_2017_1000evt.root");
 	cout<<"open file success"<<endl;
         TTree *tree = (TTree*)fin->Get("monopoles");
 	cout<<"open tree success"<<endl;
         Bool_t passHLT_Photon200;
 	Bool_t passHLT_Photon175;
+	Bool_t passHLT_DoublePhoton70;
         vector<bool> * trigResults = 0;
         vector<string> * trigNames = 0;
 
         unsigned nCandidates;
+	
+
         vector<double> *subHits=0;
         vector<double> *subSatHits=0;
         vector<double> *dEdXSig=0;
@@ -737,8 +785,12 @@ void MonoAnalyzerReal()
         vector<double> * hIso = 0;
         vector<double> * eta = 0;
         vector<double> * phi = 0;
+	vector<double> * pho_eta = 0;
+	vector<double> * pho_phi = 0;
+	vector<double> * pho_pt = 0;
+        unsigned nPhoton;
 
-        vector<double> * testE = 0;
+	vector<double> * testE = 0;
 	unsigned event;
 	unsigned NPV;
 	
@@ -746,12 +798,17 @@ void MonoAnalyzerReal()
         double mono_phi;
         double amon_eta;
         double amon_phi;
+//	double pho_eta;
+//	double pho_phi;
+//	double pho_pt;
+
 	tree->SetBranchAddress("event",&event);
 	tree->SetBranchAddress("trigResult",&trigResults);
         tree->SetBranchAddress("trigNames",&trigNames);
         tree->SetBranchAddress("passHLT_Photon200" , &passHLT_Photon200);
 	tree->SetBranchAddress("passHLT_Photon175" , &passHLT_Photon175);
-        tree->SetBranchAddress("cand_N",&nCandidates);
+        tree->SetBranchAddress("passHLT_DoublePhoton70",&passHLT_DoublePhoton70);
+	tree->SetBranchAddress("cand_N",&nCandidates);
         tree->SetBranchAddress("cand_SubHits",&subHits);
         tree->SetBranchAddress("cand_SatSubHits",&subSatHits);
         tree->SetBranchAddress("cand_dEdXSig",&dEdXSig);
@@ -773,19 +830,26 @@ void MonoAnalyzerReal()
         tree->SetBranchAddress("mono_phi",&mono_phi);
         tree->SetBranchAddress("amon_eta",&amon_eta);
         tree->SetBranchAddress("amon_phi",&amon_phi);
+        tree->SetBranchAddress("pho_N",&nPhoton);
+	tree->SetBranchAddress("pho_eta",&pho_eta);
+	tree->SetBranchAddress("pho_phi",&pho_phi);
+	tree->SetBranchAddress("pho_pt",&pho_pt);
 
 
 	double subHits_count=0;
 	double subSatHits_count=0;
-	int test=0;
-        const unsigned NEvents = tree->GetEntries();
-	vector<double> Et;
+        
 
+	const unsigned NEvents = tree->GetEntries();
+	vector<double> Et;
+	
 	
 	MonoCuts noTrgAnalysis("NO TRG",oFile);
 	MonoCuts TrgAnalysis("HLT_Photon200",oFile);
 
 	vector<MonoCandidate> cand(10);	
+	vector<Photon> photon(0);
+	
         for(unsigned ev=0; ev<NEvents;ev++){
 //		cout<<"Enter event loop"<<endl;
 //		cout<<"event number "<<NEvents<<endl;
@@ -793,10 +857,14 @@ void MonoAnalyzerReal()
 		
 		if(nCandidates>Et.size()) Et.resize(nCandidates);
 		if(nCandidates>cand.size()) cand.resize(nCandidates);
+
+		if(nPhoton>photon.size()) photon.resize(nPhoton);
+//		cout<<"nPhoton "<<nPhoton<<endl;	
+//		cout<<"photon size "<<photon.size()<<endl;
+
 		for(unsigned i=0;i<nCandidates;i++){
-//			cout<<"enter candidate loop"<<endl;
-//			cout<<"no. of cand "<<nCandidates<<endl;
-        	Et[i]= (*e55)[i]/(TMath::CosH(TMath::Abs((*eta)[i])));
+        	
+			Et[i]= (*e55)[i]/(TMath::CosH(TMath::Abs((*eta)[i])));
 /*			cout<<"Et pass"<<endl;
 			cout<<"subHits "<<(*subHits)[i]<<endl;
 			cout<<"subSatHits "<<(*subSatHits)[i]<<endl;
@@ -813,10 +881,8 @@ void MonoAnalyzerReal()
 			cout<<"hIso "<<(*hIso)[i]<<endl;
 			cout<<"eta " <<(*eta)[i]<<endl;
 			cout<<"phi " <<(*phi)[i]<<endl;
-			cout<<"HELLOO?????"<<endl;
-			//cout<<"testE "<<(*testE)[i]<<endl;
-			cout<<"........"<<endl;	
-*/		cand[i] = MonoCandidate(
+*/
+		cand[i] = MonoCandidate(
 	        (*subHits)[i],
 	        (*subSatHits)[i],
 	        (*dEdXSig)[i],
@@ -830,8 +896,8 @@ void MonoAnalyzerReal()
 	        (*dist)[i],
 	        (*f51)[i],
 	        (*f15)[i],
-//		Et[i],
-	        (*e55)[i],
+		Et[i],
+//	        (*e55)[i],
 	        (*hIso)[i],
 	        (*eta)[i],
 	        (*phi)[i],
@@ -842,18 +908,28 @@ void MonoAnalyzerReal()
 		event,
 		NPV	
      		 );
-//		cout<<"WTFFFFFFFFFFFFFFF"<<endl;
 		}
-//		cout<<"next doAnalysis"<<endl;
-//		TrgAnalysis.doAnalysis(cand,nCandidates,passHLT_Photon200,ev);
-		noTrgAnalysis.doAnalysis(cand,nCandidates,true,ev);			
+//		cout<<"enter photon loop"<<endl;
+		if(nPhoton!=0){
+		for(unsigned j=0;j<nPhoton;j++){
+/*			cout<<"pho eta "<<(*pho_eta)[j]<<endl;
+                        cout<<"pho phi"<<(*pho_phi)[j]<<endl;
+                        cout<<"pho pt "<<(*pho_pt)[j]<<endl;
+*/			photon[j] = Photon(
+			(*pho_eta)[j],
+			(*pho_phi)[j],
+			(*pho_pt)[j]
+			);
+			}
+		}
+			noTrgAnalysis.doAnalysis(cand,photon,nCandidates,nPhoton,true,ev);			
+                        TrgAnalysis.doAnalysis(cand,photon,nCandidates,nPhoton,passHLT_Photon200,ev);
 	}//for every event loop
 	TrgAnalysis.WritePlots(oFile);
 	TrgAnalysis.SignalEff("HLT_Photon200");
 
 	noTrgAnalysis.WritePlots(oFile);
 	noTrgAnalysis.SignalEff("NO TRG");
-
 	oFile->Close();	
 	cout<<"end of the code"<<endl;
 }
